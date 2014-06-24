@@ -4,6 +4,7 @@ module Spree
   module Wombat
     module Handler
       class Base
+        class ErrorResponse < StandardError; end
 
         attr_accessor :payload, :parameters, :request_id
 
@@ -25,7 +26,14 @@ module Spree
           klass.new(message)
         end
 
-        def response(message, code = 200)
+        def response(message, code = 200, exception=nil)
+          if code.to_i.between?(500,599)
+            if exception.nil?
+              exception = ErrorResponse.new(message)
+              exception.set_backtrace(caller)
+            end
+            Honeybadger.notify(exception)
+          end
           Spree::Wombat::Responder.new(@request_id, message, code)
         end
 
