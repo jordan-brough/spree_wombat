@@ -1,3 +1,4 @@
+require 'honeybadger'
 require 'simplecov'
 SimpleCov.start do
 
