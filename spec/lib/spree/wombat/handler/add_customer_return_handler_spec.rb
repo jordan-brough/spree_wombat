@@ -21,7 +21,7 @@ module Spree
 
           it "succeeds" do
             expect(responder.summary).to eql "Customer return was added"
-            expect(responder.code).to eql 201
+            expect(responder.code).to eql 200
           end
         end
 
