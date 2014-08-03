@@ -26,8 +26,11 @@ shared_examples "receives the return items" do
     expect(customer_return.return_items.map(&:reception_status).uniq).to eq ["received"]
   end
 
-  it "refunds the customer" do
-    skip
+  it "attempts to accept all of the return items" do
+    accept_count = 0
+    Spree::ReturnItem.any_instance.stub(:attempt_accept) { accept_count += 1 }
+    subject
+    expect(accept_count).to eq 3
   end
 end
 
@@ -49,8 +52,26 @@ shared_examples "does not receive the return items" do
     expect([[], ["awaiting_return"]]).to include Spree::ReturnItem.all.map(&:reception_status).uniq
   end
 
-  it "does not refund the customer" do
-    skip
+  it_behaves_like "does not attempt to refund the customer"
+end
+
+
+shared_examples "attempts to refund the customer" do
+  it do
+    subject
+    customer_return = Spree::CustomerReturn.last
+    expect(customer_return.reimbursements.count).to eq 1
+    reimbursement = customer_return.reimbursements.first
+    expect(reimbursement).to be_a Spree::Reimbursement
+    expect(customer_return).to be_fully_reimbursed
+  end
+end
+
+shared_examples "does not attempt to refund the customer" do
+  it do
+    subject
+    customer_return = Spree::CustomerReturn.last
+    expect(customer_return.try(:reimbursements)).to be_blank
   end
 end
 
@@ -59,10 +80,10 @@ module Spree
     describe Handler::AddCustomerReturnHandler do
 
       context "#process" do
-        let!(:rma) { create(:return_authorization) }
+        let!(:order) { create(:shipped_order, line_items_count: 3) }
+        let!(:rma) { create(:return_authorization, order: order) }
         let!(:shipment) { order.shipments.first }
         let!(:stock_location) { shipment.stock_location }
-        let!(:order) { rma.order }
         let!(:variant_1) { order.inventory_units.first.variant }
         let!(:variant_2) { order.inventory_units.last.variant }
 
@@ -75,6 +96,7 @@ module Spree
           order.inventory_units.detect do |iu|
             ![variant_1, variant_2].include? iu.variant
           end.update_attributes!(variant_id: variant_2.id)
+          Spree::RefundReason.create!(name: Spree::RefundReason::RETURN_PROCESSING_REASON, mutable: false)
         end
 
         context "with customer_return payload" do
@@ -116,10 +138,12 @@ module Spree
               rma.save!
             end
             it_behaves_like "receives the return items"
+            it_behaves_like "attempts to refund the customer"
           end
 
           context "there are return items that are not preauthorized" do
             it_behaves_like "receives the return items"
+            it_behaves_like "attempts to refund the customer"
           end
 
           context "there are return items that are preauthorized by another rma" do
@@ -128,21 +152,27 @@ module Spree
             end
 
             it_behaves_like "receives the return items"
+            it_behaves_like "attempts to refund the customer"
           end
 
           context "the rma does not exist" do
             before { rma.destroy! }
             it_behaves_like "receives the return items"
+            it_behaves_like "attempts to refund the customer"
           end
 
           context "the order does not exist" do
             before { order.destroy! }
-            it_behaves_like "does not receive the return items"
+            it_behaves_like "does not receive the return items" do
+              let(:error_message) { "Customer return could not be fully processed, errors:" }
+            end
           end
 
           context "the stock location does not exist" do
             before { StockLocation.where(name: stock_location.name).destroy_all }
-            it_behaves_like "does not receive the return items"
+            it_behaves_like "does not receive the return items" do
+              let(:error_message) { "Customer return could not be fully processed, errors:" }
+            end
           end
 
           context "there are not enough items to fulfill the return" do
@@ -217,6 +247,15 @@ module Spree
                 expect(customer_return.return_items).to eq [other_return_item]
               end
             end
+          end
+          context "the customer return requires manual intervention" do
+            before { Spree::CustomerReturn.any_instance.stub(:completely_decided?) { false } }
+            it_behaves_like "does not attempt to refund the customer"
+          end
+
+          context "the customer return has already been reimbursed" do
+            before { Spree::CustomerReturn.any_instance.stub(:fully_reimbursed?) { true } }
+            it_behaves_like "does not attempt to refund the customer"
           end
         end
 

@@ -13,13 +13,13 @@ module Spree
           end
 
           if customer_return.save
-            # TODO figure out how to refund
+            reimburse_customer_return!(customer_return)
             response "Customer return #{customer_return.id} was added", 200
           else
             response "Customer return could not be created, errors: #{customer_return.errors.full_messages}", 400
           end
         rescue => e
-          response "Customer return could not be created, errors: #{e}", 500
+          response "Customer return could not be fully processed, errors: #{e}", 500
         end
 
         private
@@ -52,9 +52,19 @@ module Spree
         end
 
         def sort_return_items(return_items)
-          return_items = return_items.sort { |ri| -(ri.created_at || DateTime.now).to_i }
-          return_items = return_items.sort { |ri| ri.return_authorization.try(:number) == customer_return_params[:rma] ? 0 : 1 }
-          return_items.sort { |ri| ri.persisted? ? 0 : 1 }
+          return_items = return_items.sort_by { |ri| -(ri.created_at || DateTime.now).to_i }
+          return_items = return_items.sort_by { |ri| ri.return_authorization.try(:number) == customer_return_params[:rma] ? 0 : 1 }
+          return_items.sort_by { |ri| ri.persisted? ? 0 : 1 }
+        end
+
+        def reimburse_customer_return!(customer_return)
+          if customer_return.completely_decided? && !customer_return.fully_reimbursed?
+            reimbursement = customer_return.reimbursements.create!(
+              return_items: customer_return.return_items,
+              order: customer_return.order
+            )
+            reimbursement.perform!
+          end
         end
       end
     end
