@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'spree', github: 'bonobos/spree', branch: "2-2-dev-returns-and-exchanges"
+gem 'spree_multi_domain', :git => 'git@github.com:bonobos/spree-multi-domain.git', :branch => '2-2-dev'
 
 group :test do
   #gem 'test_after_commit'
