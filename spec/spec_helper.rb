@@ -39,6 +39,8 @@ require 'spree/testing_support/preferences'
 require 'spree/testing_support/controller_requests'
 require 'active_model/serializer'
 
+require 'spree_multi_domain/factories'
+
 RSpec.configure do |config|
   config.backtrace_exclusion_patterns = [/gems\/activesupport/, /gems\/actionpack/, /gems\/rspec/]
   config.color = true

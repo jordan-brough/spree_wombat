@@ -4,7 +4,7 @@ module Spree
   module Wombat
     describe OrderSerializer do
 
-      let!(:order) {create(:shipped_order)}
+      let!(:order) {create(:shipped_order, store: create(:store, code: 'AYR'))}
       let(:serialized_order) do
         JSON.parse(OrderSerializer.new(order, root: false).to_json)
       end
@@ -13,6 +13,10 @@ module Spree
 
         it "uses the order number for id" do
           expect(serialized_order["id"]).to eql order.number
+        end
+
+        it "sets the store id" do
+          expect(serialized_order["store_code"]).to eql "AYR"
         end
 
         it "uses status for the state" do
