@@ -16,7 +16,7 @@ module Spree
         end
 
         it "sets the store id" do
-          expect(serialized_order["store_code"]).to eql "AYR"
+          expect(serialized_order["store"]["code"]).to eql "AYR"
         end
 
         it "uses status for the state" do

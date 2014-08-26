@@ -5,14 +5,14 @@ module Spree
     class OrderSerializer < ActiveModel::Serializer
 
       attributes :id, :status, :channel, :email, :currency, :placed_on, :updated_at, :totals,
-        :adjustments, :token, :channel, :store_code
+        :adjustments, :token, :channel
 
       has_many :line_items,  serializer: Spree::Wombat::LineItemSerializer
       has_many :payments, serializer: Spree::Wombat::PaymentSerializer
 
       has_one :shipping_address, serializer: Spree::Wombat::AddressSerializer
       has_one :billing_address, serializer: Spree::Wombat::AddressSerializer
-      has_one :store
+      has_one :store, serializer: Spree::Wombat::StoreSerializer
 
       def id
         object.number
@@ -24,10 +24,6 @@ module Spree
 
       def channel
         'spree'
-      end
-
-      def store_code
-        store.code
       end
 
       def updated_at
