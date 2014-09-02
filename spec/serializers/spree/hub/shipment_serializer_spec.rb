@@ -4,7 +4,7 @@ module Spree
   module Wombat
     describe ShipmentSerializer do
 
-      let(:shipment) { create(:shipment, order: create(:order_with_line_items)) }
+      let(:shipment) { create(:shipment, order: create(:order_with_line_items, store: create(:store, code: 'AYR'))) }
       let(:serialized_shipment) { JSON.parse (ShipmentSerializer.new(shipment, root: false).to_json) }
 
       it "serializes the number as id" do
@@ -34,6 +34,10 @@ module Spree
       it "serializes the stock_location.name as stock_location" do
         expect(shipment.stock_location.name).to_not eql nil
         expect(serialized_shipment["stock_location"]).to eql shipment.stock_location.name
+      end
+
+      it "sets the store code" do
+        expect(serialized_shipment["store_code"]).to eql "AYR"
       end
 
       it "serializes the shipping_method.name as shipping_method" do
