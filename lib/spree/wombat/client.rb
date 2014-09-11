@@ -19,12 +19,15 @@ module Spree
         end
 
         scope = object.constantize
+        object_table_name = scope.table_name
+
+        scope = scope.where("#{object_table_name}.updated_at > ?", ts)
 
         if filter = payload_builder[:filter]
           scope = scope.send(filter.to_sym)
         end
 
-        scope.where("updated_at > ?", ts).find_in_batches(batch_size: 10) do |batch|
+        scope.find_in_batches(batch_size: 10) do |batch|
           object_count += batch.size
           payload = ActiveModel::ArraySerializer.new(
             batch,
