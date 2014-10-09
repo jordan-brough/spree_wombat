@@ -40,9 +40,9 @@ module Spree
         expect(serialized_shipment["store_code"]).to eql "AYR"
       end
 
-      it "serializes the shipping_method.name as shipping_method" do
-        expect(shipment.shipping_method.name).to_not eql nil
-        expect(serialized_shipment["shipping_method"]).to eql shipment.shipping_method.name
+      it "serializes the shipping_method.admin_name as shipping_method" do
+        expect(shipment.shipping_method.admin_name).to_not eql nil
+        expect(serialized_shipment["shipping_method"]).to eql shipment.shipping_method.admin_name
       end
 
       it "serializes the updated_at in ISO format" do
