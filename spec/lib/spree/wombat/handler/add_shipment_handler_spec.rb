@@ -12,7 +12,7 @@ module Spree
 
           let!(:order) { create(:order_with_line_items, number: message["shipment"]["order_id"]) }
           let!(:stock_location) { create(:stock_location, name: 'default')}
-          let!(:shipping_method) { create(:shipping_method, name: 'UPS Ground (USD)')}
+          let!(:shipping_method) { create(:shipping_method, admin_name: 'UPS Ground (USD)')}
           let!(:country) { create(:country) }
           let!(:state) { create(:state, :country => country, name: "California", abbr: "CA") }
 
