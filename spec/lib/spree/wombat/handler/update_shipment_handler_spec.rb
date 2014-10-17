@@ -14,7 +14,7 @@ module Spree
           let!(:variant) { create(:variant, sku: "SPREE-T-SHIRT")}
           let!(:line_item) { create(:line_item, order: order, variant: variant)}
           let!(:stock_location) { create(:stock_location, name: 'default')}
-          let!(:shipping_method) { create(:shipping_method, name: 'UPS Ground (USD)')}
+          let!(:shipping_method) { create(:shipping_method, admin_name: 'UPS Ground (USD)')}
           let!(:country) { create(:country) }
           let!(:state) { create(:state, :country => country, name: 'California', abbr: 'CA') }
 
