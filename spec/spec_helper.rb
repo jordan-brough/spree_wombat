@@ -70,6 +70,10 @@ RSpec.configure do |config|
     HTTParty.stub :post
     Spree::Wombat::Config[:connection_token] = "abc1233"
   end
+
+  config.mock_with :rspec do |mocks|
+    mocks.yield_receiver_to_any_instance_implementation_blocks = true
+  end
 end
 
 class Spree::Wombat::Handler::MyCustomHandler < Spree::Wombat::Handler::Base

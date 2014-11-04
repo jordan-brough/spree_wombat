@@ -28,11 +28,14 @@ module Spree
 
         def response(message, code = 200, exception=nil)
           if code.to_i.between?(500,599)
+            Rails.logger.error message
             if exception.nil?
               exception = ErrorResponse.new(message)
               exception.set_backtrace(caller)
             end
             Honeybadger.notify(exception)
+          else
+            Rails.logger.info message
           end
           Spree::Wombat::Responder.new(@request_id, message, code)
         end
