@@ -33,7 +33,7 @@ module Spree
               exception = ErrorResponse.new(message)
               exception.set_backtrace(caller)
             end
-            Honeybadger.notify(exception)
+            Honeybadger.notify(exception: exception, parameters: @payload.merge(request_id: request_id))
           else
             Rails.logger.info message
           end
