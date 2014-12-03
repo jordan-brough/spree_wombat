@@ -7,27 +7,26 @@ module Spree
   module Wombat
     class Client
 
-      def self.push_batches(object)
+      def self.push_batches(object, ts_offset = 5)
         object_count = 0
 
-        ts = Spree::Wombat::Config[:last_pushed_timestamps][object]
+        last_push_time = Spree::Wombat::Config[:last_pushed_timestamps][object] || Time.now
+        this_push_time = Time.now
+
         payload_builder = Spree::Wombat::Config[:payload_builder][object]
 
-        unless ts
-          ts = Time.now
-          touch_last_pushed(object)
-        end
+        model_name = payload_builder[:model].present? ? payload_builder[:model] : object
 
-        scope = object.constantize
-        object_table_name = scope.table_name
-
-        scope = scope.where("#{object_table_name}.updated_at > ?", ts)
+        scope = model_name.constantize
 
         if filter = payload_builder[:filter]
           scope = scope.send(filter.to_sym)
         end
 
-        scope.find_in_batches(batch_size: 10) do |batch|
+        # go 'ts_offset' seconds back in time to catch missing objects
+        last_push_time = last_push_time - ts_offset.seconds
+
+        scope.where(updated_at: last_push_time...this_push_time).find_in_batches(batch_size: 10) do |batch|
           object_count += batch.size
           payload = ActiveModel::ArraySerializer.new(
             batch,
@@ -35,9 +34,10 @@ module Spree
             root: payload_builder[:root]
           ).to_json
 
-          push(payload)
-          touch_last_pushed(object)
+          push(payload) unless object_count == 0
         end
+
+        update_last_pushed(object, this_push_time) unless object_count == 0
         object_count
       end
 
@@ -59,9 +59,9 @@ module Spree
       end
 
       private
-      def self.touch_last_pushed(object)
+      def self.update_last_pushed(object, new_last_pushed)
         last_pushed_ts = Spree::Wombat::Config[:last_pushed_timestamps]
-        last_pushed_ts[object] = Time.now
+        last_pushed_ts[object] = new_last_pushed
         Spree::Wombat::Config[:last_pushed_timestamps] = last_pushed_ts
       end
 
