@@ -26,18 +26,8 @@ module Spree
           klass.new(message)
         end
 
-        def response(message, code = 200, exception=nil)
-          if code.to_i.between?(500,599)
-            Rails.logger.error message
-            if exception.nil?
-              exception = ErrorResponse.new(message)
-              exception.set_backtrace(caller)
-            end
-            Honeybadger.notify(exception: exception, parameters: @payload.merge(request_id: request_id))
-          else
-            Rails.logger.info message
-          end
-          Spree::Wombat::Responder.new(@request_id, message, code)
+        def response(message, code = 200, objects = nil, exception = nil)
+          Spree::Wombat::Responder.new(@request_id, message, code, objects, exception)
         end
 
         def process

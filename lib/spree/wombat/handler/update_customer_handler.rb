@@ -27,7 +27,7 @@ module Spree
             end
 
           rescue Exception => exception
-            return response(exception.message, 500, exception)
+            return response(exception.message, 500, nil, exception)
           end
           response "Updated customer with #{email} and ID: #{user.id}"
         end

@@ -19,7 +19,7 @@ module Spree
             user.ship_address = Spree::Address.create!(prepare_address(firstname, lastname, @payload["customer"]["shipping_address"]))
             user.bill_address = Spree::Address.create!(prepare_address(firstname, lastname, @payload["customer"]["billing_address"]))
           rescue Exception => exception
-            return response(exception.message, 500, exception)
+            return response(exception.message, 500, nil, exception)
           end
 
           user.save
